@@ -1,0 +1,106 @@
+﻿<#@ template debug="true" hostspecific="true" language="C#" #>
+<#@ output extension=".cs" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System" #>
+<#@ assembly name="System.IO" #>
+<#@ assembly name="System.Xml" #>
+<#@ assembly name="System.Data" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System" #>
+<#@ import namespace="System.Data" #>
+<#@ import namespace="System.Data.SqlClient" #>
+<#@ import namespace="System.Collections.Generic" #>
+
+<# 
+Directory.CreateDirectory(@"C:\Users\user\Desktop\ADO.NETTask\ADO.NETtask\ADO.NETtask\Models");
+
+            string connectionString = "Server=WINDOWS-PU636AO;Database=north;Trusted_Connection=True;";
+            string tableNamesQueryString =
+               "SELECT TABLE_NAME " +
+               "FROM INFORMATION_SCHEMA.TABLES " +
+               "WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_CATALOG = 'north' AND TABLE_NAME<> 'sysdiagrams';";
+            var tableNames = new List<string>();
+
+            using (SqlConnection connection =
+                new SqlConnection(connectionString))
+            {
+                SqlCommand tableNameCommand = new SqlCommand(tableNamesQueryString, connection);
+                try
+                {
+                    connection.Open();
+                    SqlDataReader tableNameReader = tableNameCommand.ExecuteReader();
+                    while (tableNameReader.Read())
+                    {
+                        tableNames.Add(tableNameReader[0].ToString());
+                    }
+                    tableNameReader.Close();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+                try
+                {
+                    foreach (var name in tableNames)
+                    {
+                        var tableContent = new List<string>();
+                        string tableContentQueryString =
+                            "SELECT CONCAT( " +
+                            "'public ', " +
+                            "IIF(DATA_TYPE = 'nvarchar', 'string' + (IIF(IS_NULLABLE = 'YES', '?', '')), ''), " +
+                            "IIF(DATA_TYPE = 'uniqueidentifier', 'string' + (IIF(IS_NULLABLE = 'YES', '?', '')), ''), " +
+                            "IIF(DATA_TYPE = 'ntext', 'string' + (IIF(IS_NULLABLE = 'YES', '?', '')), ''), " +
+                            "IIF(DATA_TYPE = 'nchar', 'string' + (IIF(IS_NULLABLE = 'YES', '?', '')), ''), " +
+                            "IIF(DATA_TYPE = 'int', 'int' + (IIF(IS_NULLABLE = 'YES', '?', '')), ''), " +
+                            "IIF(DATA_TYPE = 'smallint', 'short' + (IIF(IS_NULLABLE = 'YES', '?', '')), ''), " +
+                            "IIF(DATA_TYPE = 'tinyint', 'byte' + (IIF(IS_NULLABLE = 'YES', '?', '')), ''), " +
+                            "IIF(DATA_TYPE = 'money', 'decimal' + (IIF(IS_NULLABLE = 'YES', '?', '')), ''), " +
+                            "IIF(DATA_TYPE = 'float', 'float' + (IIF(IS_NULLABLE = 'YES', '?', '')), ''), " +
+                            "IIF(DATA_TYPE = 'decimal', 'decimal' + (IIF(IS_NULLABLE = 'YES', '?', '')), ''), " +
+                            "IIF(DATA_TYPE = 'real', 'float' + (IIF(IS_NULLABLE = 'YES', '?', '')), ''), " +
+                            "IIF(DATA_TYPE = 'bit', 'bool' + (IIF(IS_NULLABLE = 'YES', '?', '')), ''), " +
+                            "IIF(DATA_TYPE = 'datetime', 'DateTime' + (IIF(IS_NULLABLE = 'YES', '?', '')), ''), " +
+                            "IIF(DATA_TYPE = 'date', 'DateTime' + (IIF(IS_NULLABLE = 'YES', '?', '')), ''), " +
+                            "IIF(DATA_TYPE = 'datetime2', 'DateTime' + (IIF(IS_NULLABLE = 'YES', '?', '')), ''), " +
+                            "IIF(DATA_TYPE = 'image', 'byte[]' + (IIF(IS_NULLABLE = 'YES', '?', '')), ''), " +
+                            "' ', " +
+                            "COLUMN_NAME," +
+                            "' { get; set; }'" +
+                            " + (IIF((DATA_TYPE = 'nvarchar' or DATA_TYPE = 'nchar') and (IS_NULLABLE = 'NO'), ' = null!;', ''))" +
+                            ")" +
+                            "FROM INFORMATION_SCHEMA.COLUMNS " +
+                            $"WHERE TABLE_NAME = N'{name}' " +
+                            "and TABLE_SCHEMA = 'dbo' ";
+                        SqlCommand tableContentCommand = new SqlCommand(tableContentQueryString, connection);
+                        SqlDataReader tableContentReader = tableContentCommand.ExecuteReader();
+                        while (tableContentReader.Read())
+                        {
+                            tableContent.Add(tableContentReader[0].ToString());
+                        }
+                        var convertedName = name;
+                        if (name.Substring(name.Length-3) == "ies")
+                        {
+                            convertedName = name.Remove(name.Length - 3, 3);
+                            convertedName += 'y';
+                        }
+                        else if (name[name.Length - 1] == 's') convertedName = name.Remove(name.Length - 1, 1);
+                        
+                        File.WriteAllText(@"C:\Users\user\Desktop\ADO.NETTask\ADO.NETtask\ADO.NETtask\Models\\" + $"{convertedName.Replace(" ", "")}.cs", $"public class {convertedName.Replace(" ", "")}\n" + "{\n", Encoding.UTF8);
+                        foreach (var content in tableContent)
+                        {
+                            File.AppendAllText(@"C:\Users\user\Desktop\ADO.NETTask\ADO.NETtask\ADO.NETtask\Models\\" + $"{convertedName.Replace(" ", "")}.cs", $"{content}\n", Encoding.UTF8);
+                        }
+                        File.AppendAllText(@"C:\Users\user\Desktop\ADO.NETTask\ADO.NETtask\ADO.NETtask\Models\\" + $"{convertedName.Replace(" ", "")}.cs", "}");
+
+                        tableContentReader.Close();
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+            }
+#>
