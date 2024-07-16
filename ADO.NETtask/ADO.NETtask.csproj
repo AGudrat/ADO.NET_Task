@@ -26,7 +26,7 @@
   <ItemGroup>
     <PackageReference Include="PluralizeService.Core" Version="1.2.21147.2" />
     <PackageReference Include="Simple.OData.V4.Client" Version="6.0.1" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.8.5" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
   </ItemGroup>
 
   <ItemGroup>
